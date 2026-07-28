@@ -96,29 +96,7 @@ Google Fonts
 
 No framework or build system is required.
 
-🚀 Running Locally
 
-Since scannerz is a client-side web application, you can simply open the HTML file in a modern browser.
-
-For the best experience, serve it using a simple local web server:
-
-git clone https://github.com/yourusername/scannerz.git
-cd scannerz
-
-Then open the project with your preferred local server.
-
-For example, with Python:
-
-python -m http.server 8000
-
-Then visit:
-
-http://localhost:8000
-📁 Project Structure
-scannerz/
-└── index.html
-
-The current version is intentionally kept simple as a standalone HTML application containing the UI, styling, and JavaScript logic in one file.
 
 ⚠️ Limitations
 Metadata can only be displayed when it is embedded in the image and stored in a format scannerz recognizes.
