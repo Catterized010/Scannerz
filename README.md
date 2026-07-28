@@ -109,15 +109,4 @@ scannerz is designed as a local, browser-based tool.
 
 Your images are processed in your browser and are not automatically uploaded to a remote server by the application.
 
-📜 License
 
-Add your preferred license here.
-
-For example:
-
-MIT License
-⭐ Why scannerz?
-
-Managing large collections of AI-generated images can make it difficult to remember which model, LoRA, prompt, or generation settings were used for a particular image.
-
-scannerz provides a simple way to drop in a collection of images and quickly search through the metadata embedded inside them.
