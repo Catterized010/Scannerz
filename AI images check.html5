@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>scannerz</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{
+  --bg:#0a0f1a;--bg-raised:#111827;--card:#1a2236;--card-hover:#1f2a42;
+  --border:#2a3654;--border-light:#374567;--text:#e2e8f0;--text-sec:#94a3b8;
+  --text-muted:#64748b;--accent:#ef4444;--accent-dim:rgba(239,68,68,.15);
+  --danger:#ef4444;--danger-dim:rgba(239,68,68,.15);--danger-glow:rgba(239,68,68,.25);
+  --lora-color:#3b82f6;--lora-dim:rgba(59,130,246,.15);
+  --hl:#fde047;--hl-dim:rgba(253,224,71,.18);--radius:10px;--radius-sm:6px;
+  --font-ui:'Space Grotesk',sans-serif;--font-mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-ui);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 15% 0%,rgba(239,68,68,.05) 0%,transparent 50%),radial-gradient(ellipse at 85% 100%,rgba(59,130,246,.03) 0%,transparent 50%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(42,54,84,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(42,54,84,.12) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+
+header{position:sticky;top:0;z-index:100;background:rgba(10,15,26,.88);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px;white-space:nowrap;color:var(--danger);letter-spacing:-.02em}
+.logo i{font-size:20px}
+.filter-group{display:flex;align-items:center;gap:8px;flex:1;min-width:200px;max-width:520px}
+.filter-wrap{position:relative;flex:1}
+.filter-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px}
+.filter-input{width:100%;padding:9px 12px 9px 36px;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font-ui);font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+.filter-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.filter-input::placeholder{color:var(--text-muted)}
+.toggle-btn{padding:9px 14px;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-sec);font-family:var(--font-ui);font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.toggle-btn:hover{border-color:var(--accent);color:var(--text)}
+.toggle-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.stats{font-size:12px;color:var(--text-muted);white-space:nowrap;font-family:var(--font-mono)}
+.stats .mc{color:var(--danger);font-weight:700}
+.hdr-actions{display:flex;gap:8px;margin-left:auto}
+.btn{padding:8px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-raised);color:var(--text-sec);font-family:var(--font-ui);font-size:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--text-muted);color:var(--text)}
+.btn-d:hover{border-color:var(--danger);color:var(--danger)}
+
+main{position:relative;z-index:1;padding:24px}
+
+.drop-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:90px 40px;text-align:center;transition:all .3s;cursor:pointer;position:relative}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:var(--accent-dim)}
+.drop-zone.drag-over{transform:scale(1.005)}
+.drop-zone .dz-icon{font-size:52px;color:var(--text-muted);margin-bottom:20px;transition:color .3s,transform .3s}
+.drop-zone:hover .dz-icon,.drop-zone.drag-over .dz-icon{color:var(--accent);transform:translateY(-5px)}
+.drop-zone h2{font-size:22px;font-weight:600;margin-bottom:8px}
+.drop-zone p{color:var(--text-muted);font-size:14px}
+.drop-zone .sub{font-size:12px;color:var(--text-muted);margin-top:6px;opacity:.7}
+.drop-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+.drag-overlay{position:fixed;inset:0;z-index:150;background:rgba(10,15,26,.8);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;pointer-events:none}
+.drag-overlay.show{display:flex}
+.drag-overlay-box{border:2px dashed var(--accent);border-radius:16px;padding:60px 80px;text-align:center;background:var(--accent-dim)}
+.drag-overlay-box i{font-size:48px;color:var(--accent);margin-bottom:16px}
+.drag-overlay-box p{font-size:18px;font-weight:600;color:var(--accent)}
+
+.image-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.image-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:border-color .25s,box-shadow .25s,transform .25s;opacity:0;animation:cardIn .4s ease-out forwards}
+.image-card:hover{border-color:var(--border-light);transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.image-card.matched{border-color:var(--danger);box-shadow:0 0 0 1px var(--danger),0 0 24px var(--danger-glow)}
+.image-card.matched:hover{box-shadow:0 0 0 1px var(--danger),0 0 35px var(--danger-glow),0 10px 30px rgba(0,0,0,.3)}
+.image-card.no-meta{opacity:.45}
+.image-card.no-meta:hover{opacity:.65}
+.image-card.hidden{display:none}
+@keyframes cardIn{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+.card-thumb{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--bg)}
+.card-body{padding:10px 12px 12px}
+.card-fname{font-size:11px;font-family:var(--font-mono);color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px}
+.card-model-lora{display:flex;flex-wrap:wrap;gap:4px 10px;margin-bottom:6px;min-height:0}
+.card-model-lora .ml-model{font-size:10px;font-weight:600;color:var(--danger);font-family:var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:flex;align-items:center;gap:3px}
+.card-model-lora .ml-model i{font-size:9px;opacity:.7}
+.card-model-lora .ml-lora{font-size:10px;font-weight:600;color:var(--lora-color);font-family:var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:flex;align-items:center;gap:3px}
+.card-model-lora .ml-lora i{font-size:9px;opacity:.7}
+.card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;max-height:56px;overflow:hidden}
+.tag-chip{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--bg-raised);color:var(--text-sec);border:1px solid var(--border);white-space:nowrap;transition:all .2s}
+.tag-chip.hl{background:var(--hl-dim);color:var(--hl);border-color:rgba(253,224,71,.4);font-weight:600}
+.card-foot{display:flex;align-items:center;justify-content:space-between}
+.tag-cnt{font-size:11px;color:var(--text-muted)}
+.match-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--danger-dim);color:var(--danger);display:none;text-transform:uppercase;letter-spacing:.04em}
+.image-card.matched .match-badge{display:inline-block}
+.no-meta-badge{font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(100,116,139,.12);color:var(--text-muted)}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-muted);grid-column:1/-1}
+.empty-state i{font-size:40px;margin-bottom:14px;display:block;opacity:.6}
+.empty-state p{font-size:14px}
+
+.panel-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s}
+.panel-bg.open{opacity:1;pointer-events:auto}
+.detail-panel{position:fixed;top:0;right:0;width:580px;max-width:92vw;height:100vh;background:var(--bg-raised);border-left:1px solid var(--border);z-index:201;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow-y:auto;display:flex;flex-direction:column}
+.detail-panel.open{transform:translateX(0)}
+.pnl-head{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0;gap:12px}
+.pnl-head h3{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pnl-close{width:32px;height:32px;border:none;background:var(--card);color:var(--text-sec);border-radius:var(--radius-sm);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.pnl-close:hover{background:var(--card-hover);color:var(--text)}
+.pnl-img{width:100%;max-height:320px;object-fit:contain;background:var(--bg);flex-shrink:0}
+.pnl-content{padding:20px;flex:1;overflow-y:auto}
+.pnl-sec{margin-bottom:22px}
+.pnl-sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.pnl-sec-title i{font-size:12px}
+.prompt-box{font-size:12px;line-height:1.75;color:var(--text-sec);background:var(--card);padding:14px;border-radius:var(--radius-sm);border:1px solid var(--border);word-break:break-word;font-family:var(--font-mono);white-space:pre-wrap}
+.prompt-box .hl{background:var(--hl-dim);color:var(--hl);padding:1px 4px;border-radius:3px;font-weight:600}
+.prompt-box.empty{font-style:italic;color:var(--text-muted);font-family:var(--font-ui)}
+.tags-grid{display:flex;flex-wrap:wrap;gap:5px}
+.tags-grid .tag-chip{cursor:pointer;font-size:11px;padding:3px 10px}
+.tags-grid .tag-chip:hover{border-color:var(--accent);color:var(--accent)}
+.params-tbl{width:100%;border-collapse:collapse}
+.params-tbl tr{border-bottom:1px solid var(--border)}
+.params-tbl tr:last-child{border-bottom:none}
+.params-tbl td{padding:7px 10px;font-size:12px;vertical-align:top}
+.params-tbl td:first-child{color:var(--text-muted);font-family:var(--font-mono);font-size:11px;width:130px;white-space:nowrap}
+.params-tbl td:last-child{color:var(--text);word-break:break-word}
+.model-lora-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.ml-chip{font-size:11px;padding:4px 10px;border-radius:20px;font-family:var(--font-mono);font-weight:600;display:flex;align-items:center;gap:5px}
+.ml-chip.ml-chip-model{background:var(--danger-dim);color:var(--danger);border:1px solid rgba(239,68,68,.3)}
+.ml-chip.ml-chip-lora{background:var(--lora-dim);color:var(--lora-color);border:1px solid rgba(59,130,246,.3)}
+.raw-toggle{cursor:pointer;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);margin-bottom:8px;user-select:none;transition:color .2s}
+.raw-toggle:hover{color:var(--text-sec)}
+.raw-toggle i{transition:transform .2s}
+.raw-toggle.open i{transform:rotate(90deg)}
+.raw-box{background:var(--card);padding:14px;border-radius:var(--radius-sm);border:1px solid var(--border);font-family:var(--font-mono);font-size:10px;color:var(--text-muted);white-space:pre-wrap;word-break:break-all;max-height:0;overflow:hidden;padding:0 14px;transition:max-height .3s,padding .3s}
+.raw-box.open{max-height:400px;overflow-y:auto;padding:14px}
+.copy-row{display:flex;gap:8px;margin-top:10px}
+.btn-sm{padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text-sec);font-family:var(--font-ui);font-size:11px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+
+#toastBox{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:10px 18px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.35);transform:translateX(120%);opacity:0;transition:all .3s ease;pointer-events:auto}
+.toast.show{transform:translateX(0);opacity:1}
+
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--border-light)}
+
+@media(max-width:768px){
+  header{padding:10px 14px;gap:10px}
+  .filter-group{max-width:none;order:3;flex-basis:100%}
+  main{padding:14px}
+  .image-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .drop-zone{padding:60px 20px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><i class="fa-solid fa-barcode"></i> scannerz</div>
+  <div class="filter-group">
+    <div class="filter-wrap">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input class="filter-input" id="filterInput" type="text" placeholder="Filter by tag, model, or LoRA..." spellcheck="false" aria-label="Filter images by tag, model, or LoRA">
+    </div>
+    <button class="toggle-btn" id="filterToggle" title="Switch between filter modes">Highlight All</button>
+  </div>
+  <div class="stats" id="stats">0 images</div>
+  <div class="hdr-actions">
+    <button class="btn" id="addMoreBtn" style="display:none"><i class="fa-solid fa-plus"></i> Add</button>
+    <button class="btn btn-d" id="clearBtn" style="display:none"><i class="fa-solid fa-trash-can"></i> Clear</button>
+  </div>
+</header>
+
+<main id="mainArea">
+  <div class="drop-zone" id="dropZone">
+    <div class="dz-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+    `<h2>Drop AI-generated images here</h2>
+    <p>PNG files with embedded metadata (Stable Diffusion, ComfyUI, NovelAI, etc.)</p>
+    <p class="sub">or click to browse files</p>
+    <input type="file" id="fileInput" multiple accept="image/png,image/jpeg,image/webp">
+  </div>
+  <div class="image-grid" id="imageGrid" style="display:none"></div>
+</main>
+
+<div class="drag-overlay" id="dragOverlay">
+  <div class="drag-overlay-box">
+    <i class="fa-solid fa-cloud-arrow-up"></i>
+    <p>Drop to add images</p>
+  </div>
+</div>
+
+<div class="panel-bg" id="panelBg"></div>
+<div class="detail-panel" id="detailPanel" role="dialog" aria-label="Image metadata details">
+  <div class="pnl-head">
+    <h3 id="pnlTitle">—</h3>
+    <button class="pnl-close" id="pnlClose" aria-label="Close panel"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <img class="pnl-img" id="pnlImg" src="" alt="">
+  <div class="pnl-content" id="pnlContent"></div>
+</div>
+
+<div id="toastBox"></div>
+<input type="file" id="addMoreInput" multiple accept="image/png,image/jpeg,image/webp" style="display:none">
+
+<script>
+/* ── State ── */
+let images = [];
+let filterText = '';
+let filterMode = 'filter'; // 'filter' (default: show only matches) | 'highlight' (show all, highlight matches)
+let selectedIdx = -1;
+let debounceTimer = null;
+
+/* ── DOM refs ── */
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const imageGrid = document.getElementById('imageGrid');
+const filterInput = document.getElementById('filterInput');
+const filterToggle = document.getElementById('filterToggle');
+const statsEl = document.getElementById('stats');
+const clearBtn = document.getElementById('clearBtn');
+const addMoreBtn = document.getElementById('addMoreBtn');
+const addMoreInput = document.getElementById('addMoreInput');
+const mainArea = document.getElementById('mainArea');
+const dragOverlay = document.getElementById('dragOverlay');
+const panelBg = document.getElementById('panelBg');
+const detailPanel = document.getElementById('detailPanel');
+const pnlClose = document.getElementById('pnlClose');
+const pnlTitle = document.getElementById('pnlTitle');
+const pnlImg = document.getElementById('pnlImg');
+const pnlContent = document.getElementById('pnlContent');
+const toastBox = document.getElementById('toastBox');
+
+/* ── PNG Metadata Parser ── */
+async function parsePNGMetadata(buffer) {
+  const data = new Uint8Array(buffer);
+  const sig = [137,80,78,71,13,10,26,10];
+  for (let i = 0; i < 8; i++) { if (data[i] !== sig[i]) return null; }
+  const results = {};
+  let offset = 8;
+  while (offset < data.length) {
+    if (offset + 8 > data.length) break;
+    const len = (data[offset]<<24)|(data[offset+1]<<16)|(data[offset+2]<<8)|data[offset+3];
+    offset += 4;
+    const type = String.fromCharCode(data[offset],data[offset+1],data[offset+2],data[offset+3]);
+    offset += 4;
+    if (offset + len > data.length) break;
+    const chunk = data.slice(offset, offset + len);
+    offset += len + 4;
+    if (type === 'tEXt') {
+      const ni = chunk.indexOf(0);
+      if (ni === -1) continue;
+      const key = new TextDecoder().decode(chunk.slice(0, ni));
+      const val = new TextDecoder().decode(chunk.slice(ni + 1));
+      results[key] = val;
+    } else if (type === 'iTXt') {
+      let ni = chunk.indexOf(0);
+      if (ni === -1) continue;
+      const key = new TextDecoder().decode(chunk.slice(0, ni));
+      let pos = ni + 1; pos++; pos++;
+      const langEnd = chunk.indexOf(0, pos); pos = langEnd + 1;
+      const transEnd = chunk.indexOf(0, pos); pos = transEnd + 1;
+      results[key] = new TextDecoder().decode(chunk.slice(pos));
+    } else if (type === 'zTXt') {
+      let ni = chunk.indexOf(0);
+      if (ni === -1) continue;
+      const key = new TextDecoder().decode(chunk.slice(0, ni));
+      let pos = ni + 2;
+      const compressed = chunk.slice(pos);
+      try {
+        const ds = new DecompressionStream('deflate');
+        const writer = ds.writable.getWriter();
+        writer.write(compressed);
+        writer.close();
+        const reader = ds.readable.getReader();
+        const parts = [];
+        while (true) {
+          const {done, value} = await reader.read();
+          if (done) break;
+          parts.push(value);
+        }
+        const total = parts.reduce((a,c)=>a+c.length, 0);
+        const out = new Uint8Array(total);
+        let o = 0;
+        for (const p of parts) { out.set(p, o); o += p.length; }
+        results[key] = new TextDecoder().decode(out);
+      } catch(e) {
+        results[key] = '[Compressed data — could not decompress]';
+      }
+    }
+    if (type === 'IEND') break;
+  }
+  return results;
+}
+
+/* ── Extract LoRA names from prompt text ── */
+function extractLoRAs(text) {
+  const loras = [];
+  // Match <lora:name:weight>, <lyco:name:weight>, <lora:name> etc.
+  const regex = /<(?:lora|lyco):([^:>\s]+)(?::[\d.]+)?>/gi;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    let name = match[1];
+    // Strip file extensions for cleaner display
+    name = name.replace(/\.(safetensors|pt|bin|ckpt|pth)$/i, '');
+    if (name && !loras.includes(name)) loras.push(name);
+  }
+  return loras;
+}
+
+/* ── Parse AI Parameters ── */
+function parseAIParams(metadata) {
+  if (!metadata || typeof metadata !== 'object') return emptyParsed();
+  const knownKeys = ['parameters','prompt','Description','description','Comment','comment','A1111 prompt','workflow'];
+  let rawText = '';
+  for (const k of knownKeys) {
+    if (metadata[k] && typeof metadata[k] === 'string' && metadata[k].length > 10) {
+      rawText = metadata[k]; break;
+    }
+  }
+  if (!rawText) {
+    for (const [,v] of Object.entries(metadata)) {
+      if (typeof v === 'string' && v.length > 50) { rawText = v; break; }
+    }
+  }
+  if (!rawText) return emptyParsed();
+  // Try JSON parse (ComfyUI)
+  try {
+    const json = JSON.parse(rawText);
+    if (json && typeof json === 'object' && !Array.isArray(json)) {
+      return parseComfyUI(json, metadata);
+    }
+  } catch(e) {}
+  return parseTextFormat(rawText);
+}
+
+function emptyParsed() {
+  return { positivePrompt:'', negativePrompt:'', tags:[], params:{}, loras:[], model:'', hasMetadata:false, rawText:'' };
+}
+
+function parseTextFormat(text) {
+  let positive = text, negative = '', paramStr = '';
+  const negIdx = text.indexOf('Negative prompt:');
+  if (negIdx !== -1) {
+    positive = text.substring(0, negIdx).trim();
+    const after = text.substring(negIdx + 'Negative prompt:'.length);
+    const lines = after.split('\n');
+    let negLines = [], pLines = [], inP = false;
+    for (const l of lines) {
+      if (inP) { pLines.push(l); }
+      else if (/^\s*(Steps|Sampler|CFG|Size|Seed|Denoising|Hires|Model hash|Model|Clip skip|ENSD|Version|VAE):/i.test(l)) { inP = true; pLines.push(l); }
+      else { negLines.push(l); }
+    }
+    negative = negLines.join('\n').trim();
+    paramStr = pLines.join(', ').trim();
+  } else {
+    const lines = text.split('\n');
+    let prLines = [], pLines = [], inP = false;
+    for (const l of lines) {
+      if (inP) { pLines.push(l); }
+      else if (/^\s*(Steps|Sampler|CFG|Size|Seed):/i.test(l)) { inP = true; pLines.push(l); }
+      else { prLines.push(l); }
+    }
+    if (inP) { positive = prLines.join('\n').trim(); paramStr = pLines.join(', ').trim(); }
+  }
+  const tags = positive.split(/[,;\n]/).map(t=>t.trim()).filter(t=>t.length>0 && !t.match(/^<(?:lora|lyco):/i));
+  const params = {};
+  if (paramStr) {
+    for (const pair of paramStr.split(',')) {
+      const ci = pair.indexOf(':');
+      if (ci !== -1) {
+        const k = pair.substring(0,ci).trim();
+        const v = pair.substring(ci+1).trim();
+        if (k && v) params[k] = v;
+      }
+    }
+  }
+  const loras = extractLoRAs(positive);
+  const model = params['Model'] || '';
+  return { positivePrompt:positive, negativePrompt:negative, tags, params, loras, model, hasMetadata:true, rawText:text };
+}
+
+function parseComfyUI(json, allMeta) {
+  let positive = '', negative = '';
+  for (const [,node] of Object.entries(json)) {
+    if (node.class_type === 'CLIPTextEncode' && node.inputs && node.inputs.text) {
+      if (!positive) positive = node.inputs.text;
+      else if (!negative) negative = node.inputs.text;
+    }
+  }
+  const params = {};
+  const loras = [];
+  for (const [,node] of Object.entries(json)) {
+    if (node.class_type === 'KSampler' && node.inputs) {
+      if (node.inputs.steps != null) params['Steps'] = node.inputs.steps;
+      if (node.inputs.cfg != null) params['CFG scale'] = node.inputs.cfg;
+      if (node.inputs.sampler_name) params['Sampler'] = node.inputs.sampler_name;
+      if (node.inputs.scheduler) params['Scheduler'] = node.inputs.scheduler;
+      if (node.inputs.seed != null) params['Seed'] = node.inputs.seed;
+      if (node.inputs.denoise != null) params['Denoise'] = node.inputs.denoise;
+    }
+    if (node.class_type === 'EmptyLatentImage' && node.inputs) {
+      if (node.inputs.width && node.inputs.height) params['Size'] = node.inputs.width+'x'+node.inputs.height;
+    }
+    if (node.class_type === 'CheckpointLoaderSimple' && node.inputs) {
+      if (node.inputs.ckpt_name) {
+        let name = node.inputs.ckpt_name.replace(/\.(safetensors|pt|bin|ckpt|pth)$/i, '');
+        params['Model'] = name;
+      }
+    }
+    // ComfyUI LoRA loader nodes
+    if (node.class_type === 'LoraLoader' && node.inputs) {
+      if (node.inputs.lora_name) {
+        let name = node.inputs.lora_name.replace(/\.(safetensors|pt|bin|ckpt|pth)$/i, '');
+        if (name && !loras.includes(name)) loras.push(name);
+      }
+    }
+    if (node.class_type === 'LoraLoaderModelOnly' && node.inputs) {
+      if (node.inputs.lora_name) {
+        let name = node.inputs.lora_name.replace(/\.(safetensors|pt|bin|ckpt|pth)$/i, '');
+        if (name && !loras.includes(name)) loras.push(name);
+      }
+    }
+  }
+  // Also extract from prompt text for LoRAs referenced inline
+  const promptLoras = extractLoRAs(positive);
+  for (const l of promptLoras) { if (!loras.includes(l)) loras.push(l); }
+
+  const tags = positive.split(/[,;\n]/).map(t=>t.trim()).filter(t=>t.length>0 && !t.match(/^<(?:lora|lyco):/i));
+  const model = params['Model'] || '';
+  return { positivePrompt:positive, negativePrompt:negative, tags, params, loras, model, hasMetadata:true, rawText:JSON.stringify(json,null,2) };
+}
+
+/* ── File handling ── */
+async function handleFiles(files) {
+  let added = 0, skipped = 0;
+  for (const file of files) {
+    if (!file.type.startsWith('image/')) { skipped++; continue; }
+    const url = URL.createObjectURL(file);
+    let metadata = null;
+    let parsed = emptyParsed();
+    try {
+      const buf = await file.arrayBuffer();
+      const pngMeta = await parsePNGMetadata(buf);
+      if (pngMeta && Object.keys(pngMeta).length > 0) {
+        metadata = pngMeta;
+        parsed = parseAIParams(metadata);
+      }
+    } catch(e) {}
+    images.push({ id: uid(), file, url, metadata, ...parsed });
+    added++;
+  }
+  if (skipped > 0) showToast(`Skipped ${skipped} non-image file(s)`);
+  if (added > 0) {
+    showToast(`Added ${added} image${added>1?'s':''}`);
+    dropZone.style.display = 'none';
+    imageGrid.style.display = 'grid';
+    clearBtn.style.display = 'flex';
+    addMoreBtn.style.display = 'flex';
+    renderGrid();
+  }
+}
+
+function uid() { return Date.now().toString(36)+'_'+Math.random().toString(36).substr(2,8); }
+
+/* ── Filter match check (includes model & LoRA) ── */
+function isMatch(img, q) {
+  if (!q) return false;
+  const ql = q.toLowerCase();
+  if (img.positivePrompt.toLowerCase().includes(ql)) return true;
+  if (img.negativePrompt.toLowerCase().includes(ql)) return true;
+  if (img.tags.some(t => t.toLowerCase().includes(ql))) return true;
+  if (img.model && img.model.toLowerCase().includes(ql)) return true;
+  if (img.loras.some(l => l.toLowerCase().includes(ql))) return true;
+  return false;
+}
+
+/* ── Render grid ── */
+function renderGrid() {
+  const q = filterText.trim();
+  let matchCount = 0;
+  imageGrid.innerHTML = '';
+  if (images.length === 0) {
+    dropZone.style.display = '';
+    imageGrid.style.display = 'none';
+    clearBtn.style.display = 'none';
+    addMoreBtn.style.display = 'none';
+    statsEl.innerHTML = '0 images';
+    return;
+  }
+  images.forEach((img, i) => {
+    const matched = isMatch(img, q);
+    if (matched) matchCount++;
+    const hide = filterMode === 'filter' && q && !matched;
+    const card = document.createElement('div');
+    card.className = 'image-card' + (matched?' matched':'') + (!img.hasMetadata?' no-meta':'') + (hide?' hidden':'');
+    card.style.animationDelay = (i*0.025)+'s';
+    card.setAttribute('tabindex','0');
+    card.setAttribute('role','button');
+    card.setAttribute('aria-label','View metadata for ' + img.file.name);
+    card.onclick = () => openDetail(i);
+    card.onkeydown = (e) => { if(e.key==='Enter') openDetail(i); };
+
+    // Build model + LoRA line
+    let mlHTML = '';
+    if (img.hasMetadata && (img.model || img.loras.length > 0)) {
+      mlHTML = '<div class="card-model-lora">';
+      if (img.model) {
+        mlHTML += `<span class="ml-model" title="Model: ${esc(img.model)}"><i class="fa-solid fa-cube"></i> ${esc(img.model.length > 30 ? img.model.substring(0,28)+'...' : img.model)}</span>`;
+      }
+      for (const l of img.loras.slice(0, 2)) {
+        const displayName = l.length > 28 ? l.substring(0,26)+'...' : l;
+        mlHTML += `<span class="ml-lora" title="LoRA: ${esc(l)}"><i class="fa-solid fa-puzzle-piece"></i> ${esc(displayName)}</span>`;
+      }
+      if (img.loras.length > 2) {
+        mlHTML += `<span class="ml-lora" title="${esc(img.loras.slice(2).join(', '))}">+${img.loras.length - 2} more</span>`;
+      }
+      mlHTML += '</div>';
+    }
+
+    // Build tags
+    let tagsHTML = '';
+    if (img.hasMetadata && img.tags.length > 0) {
+      tagsHTML = img.tags.slice(0,5).map(t => {
+        const isHl = q && t.toLowerCase().includes(q.toLowerCase());
+        return `<span class="tag-chip${isHl?' hl':''}">${esc(t)}</span>`;
+      }).join('');
+    }
+    let badge = '';
+    if (matched) badge = '<span class="match-badge">Match</span>';
+    else if (!img.hasMetadata) badge = '<span class="no-meta-badge">No metadata</span>';
+
+    card.innerHTML = `
+      <img class="card-thumb" src="${img.url}" alt="${esc(img.file.name)}" loading="lazy">
+      <div class="card-body">
+        <div class="card-fname" title="${esc(img.file.name)}">${esc(img.file.name)}</div>
+        ${mlHTML}
+        <div class="card-tags">${tagsHTML}</div>
+        <div class="card-foot">
+          <span class="tag-cnt">${img.hasMetadata ? img.tags.length+' tags' : '—'}</span>
+          ${badge}
+        </div>
+      </div>`;
+    imageGrid.appendChild(card);
+  });
+
+  let st = `${images.length} image${images.length!==1?'s':''}`;
+  if (q) {
+    if (filterMode === 'filter') {
+      st += ` &middot; showing <span class="mc">${matchCount}</span> of ${images.length}`;
+    } else {
+      st += ` &middot; <span class="mc">${matchCount} match${matchCount!==1?'es':''}</span>`;
+    }
+  }
+  statsEl.innerHTML = st;
+
+  if (filterMode === 'filter' && q && matchCount === 0) {
+    const em = document.createElement('div');
+    em.className = 'empty-state';
+    em.innerHTML = `<i class="fa-solid fa-filter-circle-xmark"></i><p>No images match "<strong>${esc(filterText)}</strong>"</p>`;
+    imageGrid.appendChild(em);
+  }
+}
+
+/* ── Detail panel ── */
+function openDetail(idx) {
+  selectedIdx = idx;
+  const img = images[idx];
+  pnlTitle.textContent = img.file.name;
+  pnlImg.src = img.url;
+  pnlImg.alt = img.file.name;
+  const q = filterText.trim();
+
+  let html = '';
+
+  // Model & LoRA chips at the top
+  if (img.hasMetadata && (img.model || img.loras.length > 0)) {
+    html += `<div class="pnl-sec"><div class="pnl-sec-title"><i class="fa-solid fa-layer-group"></i> Model & LoRA</div><div class="model-lora-row">`;
+    if (img.model) {
+      html += `<span class="ml-chip ml-chip-model" onclick="setFilter('${escAttr(img.model)}')"><i class="fa-solid fa-cube"></i> ${esc(img.model)}</span>`;
+    }
+    for (const l of img.loras) {
+      html += `<span class="ml-chip ml-chip-lora" onclick="setFilter('${escAttr(l)}')"><i class="fa-solid fa-puzzle-piece"></i> ${esc(l)}</span>`;
+    }
+    html += '</div></div>';
+  }
+
+  // Positive prompt
+  html += `<div class="pnl-sec"><div class="pnl-sec-title"><i class="fa-solid fa-plus-circle"></i> Positive Prompt</div>`;
+  if (img.positivePrompt) {
+    html += `<div class="prompt-box">${hlText(img.positivePrompt, q)}</div>`;
+    html += `<div class="copy-row"><button class="btn-sm" onclick="copyText(images[${idx}].positivePrompt)"><i class="fa-regular fa-copy"></i> Copy</button></div>`;
+  } else {
+    html += `<div class="prompt-box empty">No positive prompt found</div>`;
+  }
+  html += '</div>';
+
+  // Negative prompt
+  html += `<div class="pnl-sec"><div class="pnl-sec-title"><i class="fa-solid fa-minus-circle"></i> Negative Prompt</div>`;
+  if (img.negativePrompt) {
+    html += `<div class="prompt-box">${hlText(img.negativePrompt, q)}</div>`;
+    html += `<div class="copy-row"><button class="btn-sm" onclick="copyText(images[${idx}].negativePrompt)"><i class="fa-regular fa-copy"></i> Copy</button></div>`;
+  } else {
+    html += `<div class="prompt-box empty">No negative prompt found</div>`;
+  }
+  html += '</div>';
+
+  // Tags
+  if (img.hasMetadata && img.tags.length > 0) {
+    html += `<div class="pnl-sec"><div class="pnl-sec-title"><i class="fa-solid fa-tags"></i> Tags (${img.tags.length})</div><div class="tags-grid">`;
+    for (const t of img.tags) {
+      const isHl = q && t.toLowerCase().includes(q.toLowerCase());
+      html += `<span class="tag-chip${isHl?' hl':''}" onclick="setFilter('${escAttr(t)}')">${esc(t)}</span>`;
+    }
+    html += '</div></div>';
+  }
+
+  // Generation parameters
+  if (img.hasMetadata && Object.keys(img.params).length > 0) {
+    html += `<div class="pnl-sec"><div class="pnl-sec-title"><i class="fa-solid fa-sliders"></i> Generation Parameters</div><table class="params-tbl">`;
+    for (const [k,v] of Object.entries(img.params)) {
+      html += `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`;
+    }
+    html += '</table></div>';
+  }
+
+  // Raw metadata
+  if (img.metadata && Object.keys(img.metadata).length > 0) {
+    html += `<div class="pnl-sec"><div class="raw-toggle" id="rawToggle" onclick="toggleRaw()"><i class="fa-solid fa-chevron-right"></i> Raw Metadata (${Object.keys(img.metadata).length} fields)</div>`;
+    html += `<div class="raw-box" id="rawBox">`;
+    for (const [k,v] of Object.entries(img.metadata)) {
+      html += `<strong>${esc(k)}:</strong>\n${esc(typeof v==='string'?v:JSON.stringify(v))}\n\n`;
+    }
+    html += '</div>';
+    html += `<div class="copy-row"><button class="btn-sm" onclick="copyText(Object.entries(images[${idx}].metadata).map(([k,v])=>k+': '+v).join('\\n'))"><i class="fa-regular fa-copy"></i> Copy Raw</button></div>`;
+    html += '</div>';
+  }
+
+  if (!img.hasMetadata) {
+    html += `<div class="pnl-sec" style="text-align:center;padding:30px 0;color:var(--text-muted)">
+      <i class="fa-solid fa-circle-info" style="font-size:28px;margin-bottom:10px;display:block;opacity:.5"></i>
+      <p>No AI metadata found in this image.</p>
+      <p style="font-size:12px;margin-top:6px;opacity:.7">Metadata may be stored in a different format or the image may not be AI-generated.</p>
+    </div>`;
+  }
+
+  pnlContent.innerHTML = html;
+  detailPanel.classList.add('open');
+  panelBg.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDetail() {
+  detailPanel.classList.remove('open');
+  panelBg.classList.remove('open');
+  document.body.style.overflow = '';
+  selectedIdx = -1;
+}
+
+function toggleRaw() {
+  const t = document.getElementById('rawToggle');
+  const b = document.getElementById('rawBox');
+  t.classList.toggle('open');
+  b.classList.toggle('open');
+}
+
+function setFilter(word) {
+  filterInput.value = word;
+  filterText = word;
+  // Switch to filter mode when clicking a chip so user sees results
+  if (filterMode !== 'filter') {
+    filterMode = 'filter';
+    filterToggle.textContent = 'Highlight All';
+    filterToggle.classList.remove('active');
+  }
+  renderGrid();
+  closeDetail();
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard')).catch(() => showToast('Copy failed'));
+}
+
+/* ── Text utilities ── */
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+function escAttr(s) {
+  return s.replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+function hlText(text, query) {
+  if (!query) return esc(text);
+  const safe = esc(text);
+  const qe = esc(query).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return safe.replace(new RegExp('('+qe+')','gi'), '<span class="hl">$1</span>');
+}
+
+/* ── Toast ── */
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  toastBox.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2600);
+}
+
+/* ── Event bindings ── */
+
+// Drop zone
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
+fileInput.addEventListener('change', e => { if(e.target.files.length) handleFiles(e.target.files); e.target.value=''; });
+
+// Global drag overlay
+let dragCounter = 0;
+document.addEventListener('dragenter', e => {
+  e.preventDefault();
+  dragCounter++;
+  if (images.length > 0) dragOverlay.classList.add('show');
+});
+document.addEventListener('dragleave', e => {
+  e.preventDefault();
+  dragCounter--;
+  if (dragCounter <= 0) { dragCounter = 0; dragOverlay.classList.remove('show'); }
+});
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  dragCounter = 0;
+  dragOverlay.classList.remove('show');
+  if (e.dataTransfer.files.length && images.length > 0) {
+    handleFiles(e.dataTransfer.files);
+  }
+});
+
+// Filter input — debounced
+filterInput.addEventListener('input', () => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    filterText = filterInput.value;
+    renderGrid();
+  }, 150);
+});
+
+// Also trigger filter on Enter key immediately
+filterInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    clearTimeout(debounceTimer);
+    filterText = filterInput.value;
+    renderGrid();
+  }
+});
+
+// Filter mode toggle
+filterToggle.addEventListener('click', () => {
+  if (filterMode === 'filter') {
+    filterMode = 'highlight';
+    filterToggle.textContent = 'Filter Only';
+    filterToggle.classList.add('active');
+  } else {
+    filterMode = 'filter';
+    filterToggle.textContent = 'Highlight All';
+    filterToggle.classList.remove('active');
+  }
+  renderGrid();
+});
+
+// Clear all
+clearBtn.addEventListener('click', () => {
+  images.forEach(img => URL.revokeObjectURL(img.url));
+  images = [];
+  filterText = '';
+  filterInput.value = '';
+  renderGrid();
+  showToast('All images cleared');
+});
+
+// Add more
+addMoreBtn.addEventListener('click', () => addMoreInput.click());
+addMoreInput.addEventListener('change', e => { if(e.target.files.length) handleFiles(e.target.files); e.target.value=''; });
+
+// Panel close
+pnlClose.addEventListener('click', closeDetail);
+panelBg.addEventListener('click', closeDetail);
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && selectedIdx !== -1) closeDetail(); });
+
+// Prevent default browser drag-open behavior
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => e.preventDefault());
+</script>
+</body>
+</html>
