@@ -1,8 +1,8 @@
-scannerz
+Scannerz
 
 A lightweight, browser-based metadata viewer and prompt browser for AI-generated images.
 
-scannerz lets you drag and drop AI-generated images into your browser, automatically read embedded metadata, and browse prompts, tags, generation settings, models, and LoRAs in a clean, searchable interface. There is no backend and no uploads — everything runs directly in your browser.
+Scannerz lets you drag and drop AI-generated images into your browser, automatically read embedded metadata, and browse prompts, tags, generation settings, models, and LoRAs in a clean, searchable interface. There is no backend and no uploads — everything runs directly in your browser.
 
 Features
 Drag and drop images — Add multiple AI-generated images by dragging them into the app or selecting them from your computer.
@@ -18,7 +18,7 @@ Responsive interface — Works on desktop and smaller screens.
 Client-side only — Images are processed locally in the browser; there is no server-side upload or database.
 Supported metadata
 
-scannerz is built around metadata commonly embedded in AI-generated PNG files, including the tEXt, iTXt, and zTXt chunk types. It can parse metadata produced by:
+Scannerz is built around metadata commonly embedded in AI-generated PNG files, including the tEXt, iTXt, and zTXt chunk types. It can parse metadata produced by:
 
 Stable Diffusion / AUTOMATIC1111-style metadata
 ComfyUI workflows
@@ -27,9 +27,9 @@ Other AI image generators that embed compatible PNG metadata
 Parsed metadata includes prompts, negative prompts, generation parameters, models, and LoRAs, where the required information is available.
 
 How it works
-Open scannerz in your browser.
+Open Scannerz in your browser.
 Drag and drop your AI-generated images into the application.
-scannerz reads available PNG metadata directly in the browser.
+Scannerz reads available PNG metadata directly in the browser.
 Metadata is parsed into prompts, tags, models, LoRAs, and generation parameters.
 Browse your images in a searchable grid.
 Click an image to open its detailed metadata panel.
